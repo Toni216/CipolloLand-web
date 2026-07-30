@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+:root {
+  /* Paleta T3 Apocalipsis */
+  --green:        #4a7c3f;
+  --green-bright: #6db560;
+  --blood:        #9b1c1c;
+  --blood-bright: #c0302f;
+  --bone:         #cfc5a0;
+  --bone-dim:     #8a8070;
+
+  --bg:      #090a07;
+  --bg2:     #0d0f0b;
+  --surface: #161810;
+
+  --text-main: #cfc5a0;
+  --text-mid:  #706858;
+  --text-dim:  #3e3828;
+
+  --font-titulo:  var(--font-bebas);
+  --font-lore:    var(--font-special-elite);
+  --font-ui:      var(--font-barlow-condensed);
+  --font-cuerpo:  var(--font-barlow);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: 'Barlow', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .nav-links-desktop,
+  .nav-actions-desktop { display: none !important; }
+  .nav-hamburger-btn   { display: flex !important; }
+}
+
+@layer components {
+  .nav-btn-login {
+    font-family: var(--font-barlow-condensed);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 8px 18px;
+    cursor: pointer;
+    border: 1px solid rgba(74,124,63,0.4);
+    color: var(--green-bright);
+    background: transparent;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+  }
+
+  .nav-btn-login:hover {
+    background: rgba(74,124,63,0.08);
+    border-color: var(--green);
+  }
+
+  .nav-btn-registro {
+    font-family: var(--font-barlow-condensed);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 8px 18px;
+    cursor: pointer;
+    background: var(--blood);
+    color: var(--bone);
+    border: 1px solid var(--blood);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+  }
+
+  .nav-btn-registro:hover {
+    background: var(--blood-bright);  /* un poco más brillante al hover */
+    box-shadow: 0 0 24px rgba(155,28,28,0.45);
+  }
+}
+
+@layer components {
+  .nav-card:hover {
+    background: rgba(74,124,63,0.04) !important;
+  }
+}
+
+.nav-card:hover {
+  background: rgba(74,124,63,0.06) !important;
+}
+
+.nav-card:hover .nav-card-arrow {
+  opacity: 1;
+  color: var(--green-bright);
+}
+
+@layer components {
+.footer-social-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;  /* sin comillas */
+  padding: 10px 16px;
+  background: var(--sc-faint);
+  border: 1px solid rgba(255,255,255,0.055);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+  .footer-social-btn:hover {
+    background: var(--sc-hover);
+  }
+
+  .footer-social-name {
+    font-family: var(--font-barlow-condensed);
+    font-size: 12px;
+    color: var(--bone-dim);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .footer-social-desc {
+    font-family: var(--font-barlow-condensed);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .footer-link {
+    font-family: var(--font-barlow-condensed);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover {
+    color: var(--green-bright);
+  }
+}
+
+.footer-link-col {
+  font-family: var(--font-barlow-condensed);
+  font-size: 14px;
+  color: var(--text-mid);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-link-col:hover {
+  color: var(--green-bright);
+}
+
+.footer-social-link {
+  font-family: var(--font-barlow-condensed);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  padding: 0 10px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.footer-social-link:hover {
+  opacity: 1;
+}
+
+.footer-legal-link {
+  font-family: var(--font-barlow-condensed);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  padding: 0 10px;
+  transition: color 0.2s;
+}
+
+.footer-legal-link:hover {
+  color: var(--green-bright);
+}
+
+@keyframes navFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
