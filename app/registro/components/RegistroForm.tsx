@@ -3,10 +3,13 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function RegistroForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const invite = searchParams.get('invite')
+
   const [username, setUsername] = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -18,11 +21,10 @@ export default function RegistroForm() {
     setLoading(true)
     setError('')
 
-    // Llamada a la API de registro
     const res = await fetch('/api/auth/registro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({ username, email, password, invite })
     })
 
     const data = await res.json()
@@ -33,7 +35,6 @@ export default function RegistroForm() {
       return
     }
 
-    // Login automático tras registro
     const loginRes = await signIn('credentials', {
       email,
       password,
@@ -73,6 +74,18 @@ export default function RegistroForm() {
   return (
     <form onSubmit={handleSubmit} style={{ padding: '24px 32px 32px' }}>
       <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+
+        {invite && (
+          <div style={{
+            fontFamily: 'var(--font-barlow-condensed)',
+            fontSize: '11px', color: 'var(--green-bright)',
+            letterSpacing: '0.06em', padding: '8px 12px',
+            border: '1px solid rgba(74,124,63,0.3)',
+            background: 'rgba(74,124,63,0.05)'
+          }}>
+            ✓ Te unes con una invitación directa
+          </div>
+        )}
 
         <div>
           <label style={labelStyle}>Nick</label>

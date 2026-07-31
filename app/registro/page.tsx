@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import RegistroForm from './components/RegistroForm'
 
 export default function RegistroPage() {
@@ -14,7 +15,6 @@ export default function RegistroPage() {
         background: 'var(--bg2)',
       }}>
 
-        {/* Cabecera */}
         <div style={{
           padding: '32px 32px 24px',
           borderBottom: '1px solid rgba(255,255,255,0.055)',
@@ -37,8 +37,9 @@ export default function RegistroPage() {
           </h1>
         </div>
 
-        {/* Formulario */}
-        <RegistroForm />
+        <Suspense>
+          <RegistroForm />
+        </Suspense>
 
       </div>
     </main>

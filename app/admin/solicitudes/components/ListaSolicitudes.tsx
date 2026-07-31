@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ModalCrearPersonaje from '@/app/perfil/[username]/components/ModalCrearPersonaje'
 
 interface Solicitud {
   id: string
@@ -53,6 +54,7 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
   const [slots, setSlots] = useState(1)
   const [mostrarRechazo, setMostrarRechazo] = useState(false)
   const [mostrarAprobacion, setMostrarAprobacion] = useState(false)
+  const [mostrarCrearPj, setMostrarCrearPj] = useState(false)
 
   async function aprobar() {
     setLoading(true)
@@ -209,6 +211,30 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
                 Motivo de rechazo: {s.motivo_rechazo}
               </div>
             </div>
+          )}
+
+          {s.status === 'aprobado' && (
+            <div style={{ marginBottom: '16px' }}>
+              <button onClick={() => setMostrarCrearPj(true)} style={{
+                fontFamily: 'var(--font-barlow-condensed)',
+                fontSize: '11px', letterSpacing: '0.15em',
+                textTransform: 'uppercase' as const, fontWeight: 600,
+                padding: '8px 20px', cursor: 'pointer',
+                background: 'transparent', color: 'var(--green-bright)',
+                border: '1px solid rgba(74,124,63,0.4)'
+              }}>
+                + Crear personaje para {s.username}
+              </button>
+            </div>
+          )}
+
+          {mostrarCrearPj && s.username && (
+            <ModalCrearPersonaje
+              onClose={() => setMostrarCrearPj(false)}
+              onSuccess={() => { setMostrarCrearPj(false); onRefresh() }}
+              esAdmin={true}
+              duenoFijo={s.username}
+            />
           )}
 
           {/* Acciones (solo si está pendiente) */}

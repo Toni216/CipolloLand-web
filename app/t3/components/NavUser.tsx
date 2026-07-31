@@ -116,7 +116,7 @@ export default function NavUser({ user }: Props) {
           {/* Links */}
           {[
             { label: 'Mi perfil',        href: '/perfil' },
-            { label: 'Solicitar acceso', href: '/perfil#acceso' },
+            { label: 'Solicitar acceso', href: '/t3/solicitud' },
           ].map(l => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} style={{
               display: 'block',

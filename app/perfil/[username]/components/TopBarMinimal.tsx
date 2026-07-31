@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function TopBarMinimal() {
@@ -12,7 +13,7 @@ export default function TopBarMinimal() {
       borderBottom: '1px solid rgba(74,124,63,0.2)',
       backdropFilter: 'blur(10px)',
       height: '64px',
-      display: 'flex', alignItems: 'center',
+      display: 'flex', alignItems: 'center', gap: '16px',
       padding: '0 32px',
     }}>
       <button onClick={() => router.back()} style={{
@@ -30,6 +31,15 @@ export default function TopBarMinimal() {
       >
         ← Volver
       </button>
+
+      <Link href="/t3" style={{
+        fontFamily: 'var(--font-barlow-condensed)',
+        fontSize: '11px', letterSpacing: '0.16em',
+        textTransform: 'uppercase' as const,
+        color: 'var(--text-dim)', textDecoration: 'none',
+      }}>
+        Inicio
+      </Link>
     </nav>
   )
 }
