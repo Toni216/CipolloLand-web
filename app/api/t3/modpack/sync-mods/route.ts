@@ -51,26 +51,25 @@ export async function POST() {
 
   const modFilesDeclarados = index.files.filter(f => f.path.startsWith('mods/'))
 
-  // Mods incluidos directamente en overrides/mods/ (no vienen en modrinth.index.json)
-  const carpetaOverrides = zip.folder('overrides/mods')
-  const archivosOverride: { path: string, hash: string }[] = []
+const archivosOverride: { path: string, hash: string }[] = []
 
-  if (carpetaOverrides) {
-    const entradas = Object.keys(carpetaOverrides.files)
-    console.log('🔍 Archivos encontrados en overrides/mods:', entradas.length, entradas.slice(0, 5))
-    for (const nombreArchivo of entradas) {
-      // Solo .jar directamente en mods/, ignoramos subcarpetas como .connector
-      if (!nombreArchivo.endsWith('.jar')) continue
-      if (nombreArchivo.includes('/')) continue // está en una subcarpeta, no en la raíz de mods/
+  const rutasOverrideMods = Object.keys(zip.files).filter(ruta => {
+    if (!ruta.startsWith('overrides/mods/')) return false
+    if (!ruta.endsWith('.jar')) return false
+    const resto = ruta.slice('overrides/mods/'.length)
+    return !resto.includes('/') // sin subcarpetas, ej. sin .connector
+  })
 
-      const archivoZip = carpetaOverrides.file(nombreArchivo)
-      if (!archivoZip) continue
+  console.log('🔍 Jars encontrados en overrides/mods:', rutasOverrideMods.length, rutasOverrideMods.slice(0, 5))
 
-      const bytesArchivo = await archivoZip.async('nodebuffer')
-      const hashSha1 = createHash('sha1').update(bytesArchivo).digest('hex')
+  for (const ruta of rutasOverrideMods) {
+    const archivoZip = zip.file(ruta)
+    if (!archivoZip) continue
 
-      archivosOverride.push({ path: `overrides/mods/${nombreArchivo}`, hash: hashSha1 })
-    }
+    const bytesArchivo = await archivoZip.async('nodebuffer')
+    const hashSha1 = createHash('sha1').update(bytesArchivo).digest('hex')
+
+    archivosOverride.push({ path: ruta, hash: hashSha1 })
   }
 
   // Unificamos las dos fuentes: los declarados en el índice + los empaquetados sueltos
