@@ -57,6 +57,7 @@ export async function POST() {
 
   if (carpetaOverrides) {
     const entradas = Object.keys(carpetaOverrides.files)
+    console.log('🔍 Archivos encontrados en overrides/mods:', entradas.length, entradas.slice(0, 5))
     for (const nombreArchivo of entradas) {
       // Solo .jar directamente en mods/, ignoramos subcarpetas como .connector
       if (!nombreArchivo.endsWith('.jar')) continue
