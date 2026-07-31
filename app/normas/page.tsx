@@ -8,7 +8,7 @@ export default async function NormasPage() {
   return (
     <>
       <Navbar session={session} />
-      <PaginaProximamente titulo="Normas" sub="Las reglas de la Temporada 3 estarán aquí muy pronto." />
+      <PaginaProximamente titulo="Normas" sub="Las normas de uso de CipolloLand estarán aquí muy pronto." />
       <Footer />
     </>
   )

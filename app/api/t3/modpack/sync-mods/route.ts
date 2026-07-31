@@ -5,7 +5,7 @@ import { r2, BUCKET } from '@/lib/r2'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import JSZip from 'jszip'
 import { resolveProjectIds, fetchProjects, mapCategorias, toPgTextArray } from '@/lib/modrinth'
-
+import { createHash } from 'crypto'
 
 interface MrpackFile {
   path: string
@@ -49,15 +49,40 @@ export async function POST() {
   const raw = await indexFile.async('string')
   const index: MrpackIndex = JSON.parse(raw)
 
-  const modFiles = index.files.filter(f => f.path.startsWith('mods/'))
-  const hashes = modFiles.map(f => f.hashes.sha1)
+  const modFilesDeclarados = index.files.filter(f => f.path.startsWith('mods/'))
+
+  // Mods incluidos directamente en overrides/mods/ (no vienen en modrinth.index.json)
+  const carpetaOverrides = zip.folder('overrides/mods')
+  const archivosOverride: { path: string, hash: string }[] = []
+
+  if (carpetaOverrides) {
+    const entradas = Object.keys(carpetaOverrides.files)
+    for (const nombreArchivo of entradas) {
+      // Solo .jar directamente en mods/, ignoramos subcarpetas como .connector
+      if (!nombreArchivo.endsWith('.jar')) continue
+      if (nombreArchivo.includes('/')) continue // está en una subcarpeta, no en la raíz de mods/
+
+      const archivoZip = carpetaOverrides.file(nombreArchivo)
+      if (!archivoZip) continue
+
+      const bytesArchivo = await archivoZip.async('nodebuffer')
+      const hashSha1 = createHash('sha1').update(bytesArchivo).digest('hex')
+
+      archivosOverride.push({ path: `overrides/mods/${nombreArchivo}`, hash: hashSha1 })
+    }
+  }
+
+  // Unificamos las dos fuentes: los declarados en el índice + los empaquetados sueltos
+  const modFiles = [
+    ...modFilesDeclarados.map(f => ({ path: f.path, hash: f.hashes.sha1 })),
+    ...archivosOverride,
+  ]
+
+  const hashes = modFiles.map(f => f.hash)
 
   // 3. Preguntamos a Modrinth qué project_id corresponde a cada hash
   const hashToVersion = await resolveProjectIds(hashes)
   const projectIds = [...new Set(Object.values(hashToVersion).map(v => v.project_id))]
-
-  // Mods que Modrinth no reconoce (probablemente de CurseForge o custom)
-  const noResueltos = modFiles.length - Object.keys(hashToVersion).length
 
   // 4. Pedimos los datos completos de cada mod reconocido
   const proyectos = await fetchProjects(projectIds)
@@ -72,7 +97,7 @@ export async function POST() {
   }
 
   // 6. Upsert de cada mod reconocido
-for (const p of proyectos) {
+  for (const p of proyectos) {
     await prisma.$queryRawUnsafe(
       `INSERT INTO season_mods
          (temporada_id, nombre, descripcion, categoria, icono_url, modrinth_id, modrinth_url, origen)
@@ -109,7 +134,7 @@ for (const p of proyectos) {
 
   // 8. Mods no reconocidos por Modrinth → placeholder para editar a mano
   const hashesResueltos = new Set(Object.keys(hashToVersion))
-  const archivosNoReconocidos = modFiles.filter(f => !hashesResueltos.has(f.hashes.sha1))
+  const archivosNoReconocidos = modFiles.filter(f => !hashesResueltos.has(f.hash))
 
   for (const f of archivosNoReconocidos) {
     const nombreArchivo = f.path.split('/').pop() ?? f.path
@@ -129,5 +154,4 @@ for (const p of proyectos) {
     sincronizados: proyectos.length,
     noReconocidos: archivosNoReconocidos.length,
   })
-  
 }

@@ -18,7 +18,7 @@ const sociales = [
 
 const legal = [
   { label: 'Equipo',      href: '/equipo' },  
-  { label: 'Normas',      href: '/t3/normas' },
+  { label: 'Normas',      href: '/normas' },
   { label: 'Privacidad',  href: '/privacidad' },
   { label: 'Aviso legal', href: '/aviso-legal' },
   { label: 'Contacto',    href: '/contacto' },
