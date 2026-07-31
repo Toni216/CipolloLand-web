@@ -55,6 +55,9 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
   const [mostrarRechazo, setMostrarRechazo] = useState(false)
   const [mostrarAprobacion, setMostrarAprobacion] = useState(false)
   const [mostrarCrearPj, setMostrarCrearPj] = useState(false)
+  const [mostrarAsignarPj, setMostrarAsignarPj] = useState(false)
+  const [personajesSinDueno, setPersonajesSinDueno] = useState<Array<{ id: string, nombre_pj: string | null, faccion_pj: string | null }>>([])
+  const [asignando, setAsignando] = useState(false)
 
   async function aprobar() {
     setLoading(true)
@@ -82,6 +85,25 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
       })
     })
     setLoading(false)
+    onRefresh()
+  }
+
+  async function abrirAsignar() {
+    const res = await fetch('/api/t3/personaje/sin-dueno')
+    const data = await res.json()
+    setPersonajesSinDueno(data.personajes ?? [])
+    setMostrarAsignarPj(true)
+  }
+
+  async function asignarPersonaje(personajeId: string) {
+    setAsignando(true)
+    await fetch(`/api/t3/personaje/${personajeId}/asignar`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: s.username }),
+    })
+    setAsignando(false)
+    setMostrarAsignarPj(false)
     onRefresh()
   }
 
@@ -214,7 +236,7 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
           )}
 
           {s.status === 'aprobado' && (
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
               <button onClick={() => setMostrarCrearPj(true)} style={{
                 fontFamily: 'var(--font-barlow-condensed)',
                 fontSize: '11px', letterSpacing: '0.15em',
@@ -224,6 +246,66 @@ function TarjetaSolicitud({ s, onRefresh }: { s: Solicitud, onRefresh: () => voi
                 border: '1px solid rgba(74,124,63,0.4)'
               }}>
                 + Crear personaje para {s.username}
+              </button>
+              <button onClick={abrirAsignar} style={{
+                fontFamily: 'var(--font-barlow-condensed)',
+                fontSize: '11px', letterSpacing: '0.15em',
+                textTransform: 'uppercase' as const, fontWeight: 600,
+                padding: '8px 20px', cursor: 'pointer',
+                background: 'transparent', color: '#c9962a',
+                border: '1px solid rgba(201,150,42,0.4)'
+              }}>
+                Asignar personaje existente
+              </button>
+            </div>
+          )}
+
+          {mostrarAsignarPj && (
+            <div style={{
+              border: '1px solid rgba(201,150,42,0.2)',
+              background: 'rgba(201,150,42,0.04)',
+              padding: '16px', marginBottom: '16px'
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px',
+                letterSpacing: '0.2em', textTransform: 'uppercase' as const,
+                color: '#c9962a', marginBottom: '12px', fontWeight: 600
+              }}>
+                Elige un personaje sin dueño para {s.username}
+              </div>
+
+              {personajesSinDueno.length === 0 ? (
+                <p style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '13px', color: 'var(--text-dim)' }}>
+                  No hay personajes sin dueño ahora mismo.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px', marginBottom: '10px' }}>
+                  {personajesSinDueno.map(pj => (
+                    <button
+                      key={pj.id}
+                      onClick={() => asignarPersonaje(pj.id)}
+                      disabled={asignando}
+                      style={{
+                        textAlign: 'left' as const,
+                        fontFamily: 'var(--font-barlow-condensed)', fontSize: '13px',
+                        padding: '10px 14px', cursor: 'pointer',
+                        background: 'var(--bg)', color: 'var(--bone-dim)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      {pj.nombre_pj ?? 'Sin nombre'} {pj.faccion_pj && `· ${pj.faccion_pj}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <button onClick={() => setMostrarAsignarPj(false)} style={{
+                fontFamily: 'var(--font-barlow-condensed)', fontSize: '11px',
+                padding: '6px 14px', cursor: 'pointer',
+                background: 'transparent', color: 'var(--text-dim)',
+                border: '1px solid rgba(255,255,255,0.055)'
+              }}>
+                Cancelar
               </button>
             </div>
           )}
