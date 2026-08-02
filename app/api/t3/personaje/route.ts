@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 
+// Límites reales de columna en perfil_jugador (VARCHAR)
+const LIMITES = {
+  nombre_pj: 64,
+  faccion_pj: 64,
+  raza_pj: 64,
+  clase_pj: 64,
+  comida_favorita: 128,
+  apodo_odiado: 128,
+} as const
+
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -17,6 +27,17 @@ export async function POST(req: Request) {
 
   if (!nombre_pj?.trim()) {
     return NextResponse.json({ error: 'El nombre es obligatorio.' }, { status: 400 })
+  }
+
+  // Validar longitudes antes de tocar la base de datos
+  for (const [campo, limite] of Object.entries(LIMITES)) {
+    const valor = body[campo]
+    if (typeof valor === 'string' && valor.length > limite) {
+      return NextResponse.json(
+        { error: `El campo "${campo}" no puede superar los ${limite} caracteres (tiene ${valor.length}).` },
+        { status: 400 }
+      )
+    }
   }
 
   try {

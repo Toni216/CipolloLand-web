@@ -141,10 +141,15 @@ function FormularioPj({ onClose, onSuccess, esAdmin, duenoFijo }: FormularioPjPr
     display: 'block'
   }
 
-  const campo = (key: string, label: string, placeholder: string, required = false, tipo: 'input' | 'textarea' = 'input') => (
+  const campo = (key: string, label: string, placeholder: string, required = false, tipo: 'input' | 'textarea' = 'input', maxLength?: number) => (
     <div key={key}>
       <label style={labelStyle}>
         {label} {required && <span style={{ color: 'var(--blood-bright)' }}>*</span>}
+        {maxLength && (
+          <span style={{ color: 'var(--text-dim)', textTransform: 'none' as const, letterSpacing: 0 }}>
+            {' '}({(form as any)[key].length}/{maxLength})
+          </span>
+        )}
       </label>
       {tipo === 'textarea' ? (
         <textarea
@@ -153,6 +158,7 @@ function FormularioPj({ onClose, onSuccess, esAdmin, duenoFijo }: FormularioPjPr
           onChange={e => set(key, e.target.value)}
           placeholder={placeholder}
           required={required}
+          maxLength={maxLength}
         />
       ) : (
         <input
@@ -161,6 +167,7 @@ function FormularioPj({ onClose, onSuccess, esAdmin, duenoFijo }: FormularioPjPr
           onChange={e => set(key, e.target.value)}
           placeholder={placeholder}
           required={required}
+          maxLength={maxLength}
         />
       )}
     </div>
@@ -221,7 +228,7 @@ function FormularioPj({ onClose, onSuccess, esAdmin, duenoFijo }: FormularioPjPr
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '12px' }}>
-          {campo('nombre_pj', 'Nombre del personaje', 'Ej: Zarael_X', true)}
+          {campo('nombre_pj', 'Nombre del personaje', 'Ej: Zarael_X', true, 'input', 64)}
           {campo('edad_pj', 'Edad', '25')}
         </div>
 
@@ -269,8 +276,8 @@ function FormularioPj({ onClose, onSuccess, esAdmin, duenoFijo }: FormularioPjPr
             Preguntas adicionales
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
-            {campo('comida_favorita', '¿Tiene alguna comida favorita en este apocalipsis?', 'Latas de atún, carne de zombie...')}
-            {campo('apodo_odiado', '¿Tiene algún apodo que odia que le llamen?', 'Ej: "El Pequeño"')}
+            {campo('comida_favorita', '¿Tiene alguna comida favorita en este apocalipsis?', 'Latas de atún, carne de zombie...', false, 'input', 128)}
+            {campo('apodo_odiado', '¿Tiene algún apodo que odia que le llamen?', 'Ej: "El Pequeño"', false, 'input', 128)}
           </div>
         </div>
 
