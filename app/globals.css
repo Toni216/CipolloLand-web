@@ -187,3 +187,12 @@ body {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes senalPulso {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+  50%      { opacity: 0.45; box-shadow: 0 0 6px 1px currentColor; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .senal-dot { animation: none !important; }
+}

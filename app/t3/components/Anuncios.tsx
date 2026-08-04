@@ -10,26 +10,74 @@ export default async function Anuncios() {
     include: { users: { select: { username: true } } }
   })
 
+  const esReciente = anuncio
+    ? (Date.now() - new Date(anuncio.created_at).getTime()) < 1000 * 60 * 60 * 48
+    : false
+
+  const acento = anuncio?.pinned ? 'var(--blood-bright)' : 'var(--green-bright)'
+
   return (
-    <div style={{ padding: '48px 40px' }}>
-      <div style={{
-        fontFamily: 'var(--font-barlow-condensed)',
-        fontSize: '10px', letterSpacing: '0.28em',
-        textTransform: 'uppercase' as const,
-        color: 'var(--green-bright)',
-        marginBottom: '10px', fontWeight: 600, opacity: 0.75
-      }}>
-        Anuncios
+    <div style={{
+      padding: '48px 40px',
+      position: 'relative',
+      height: '100%',
+      boxSizing: 'border-box',
+      borderLeft: anuncio ? `3px solid ${acento}` : undefined,
+      background: anuncio?.pinned
+        ? 'linear-gradient(135deg, rgba(155,28,28,0.05), transparent 60%)'
+        : undefined,
+    }}>
+      {/* Textura de estática de fondo, muy sutil */}
+      {anuncio && (
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px)',
+        }} />
+      )}
+
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <span
+          className="senal-dot"
+          style={{
+            display: 'inline-block',
+            width: '7px', height: '7px', borderRadius: '50%',
+            background: acento, color: acento,
+            animation: anuncio ? 'senalPulso 1.8s ease-in-out infinite' : undefined,
+          }}
+        />
+        <div style={{
+          fontFamily: 'var(--font-barlow-condensed)',
+          fontSize: '10px', letterSpacing: '0.28em',
+          textTransform: 'uppercase' as const,
+          color: acento,
+          fontWeight: 600, opacity: 0.85
+        }}>
+          {anuncio?.pinned ? 'Transmisión de emergencia' : 'Señal recibida'}
+        </div>
       </div>
 
-      <h2 style={{
-        fontFamily: 'var(--font-bebas)',
-        fontSize: 'clamp(32px, 5vw, 56px)',
-        color: 'var(--bone)', letterSpacing: '0.04em',
-        lineHeight: 1, marginBottom: '16px'
-      }}>
-        Novedades
-      </h2>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-bebas)',
+          fontSize: 'clamp(32px, 5vw, 56px)',
+          color: 'var(--bone)', letterSpacing: '0.04em',
+          lineHeight: 1,
+        }}>
+          Novedades
+        </h2>
+        {esReciente && !anuncio?.pinned && (
+          <span style={{
+            fontFamily: 'var(--font-barlow-condensed)',
+            fontSize: '10px', letterSpacing: '0.15em',
+            textTransform: 'uppercase' as const,
+            color: 'var(--green-bright)',
+            border: '1px solid rgba(74,124,63,0.4)',
+            padding: '3px 8px',
+          }}>
+            Nuevo
+          </span>
+        )}
+      </div>
 
       <div style={{
         width: '40px', height: '2px',
@@ -38,15 +86,16 @@ export default async function Anuncios() {
       }} />
 
       {anuncio ? (
-        <div>
+        <div style={{ position: 'relative' }}>
           {anuncio.pinned && (
             <div style={{
               display: 'inline-block',
               fontFamily: 'var(--font-barlow-condensed)',
               fontSize: '9px', letterSpacing: '0.15em',
               textTransform: 'uppercase' as const,
-              color: 'var(--green-bright)',
-              border: '1px solid rgba(74,124,63,0.4)',
+              color: 'var(--blood-bright)',
+              border: '1px solid rgba(155,28,28,0.4)',
+              background: 'rgba(155,28,28,0.06)',
               padding: '2px 8px', marginBottom: '12px'
             }}>
               📌 Fijado
@@ -54,7 +103,7 @@ export default async function Anuncios() {
           )}
           <div style={{
             fontFamily: 'var(--font-bebas)',
-            fontSize: '22px', color: 'var(--bone-dim)',
+            fontSize: '24px', color: 'var(--bone-dim)',
             letterSpacing: '0.06em', marginBottom: '10px'
           }}>
             {anuncio.titulo}

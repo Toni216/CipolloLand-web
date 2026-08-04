@@ -7,7 +7,6 @@ const cards = [
   { num: '04', titulo: 'Foro',       desc: 'Debates, teorías y avisos de la comunidad.', href: '/t3/foro' },
   { num: '05', titulo: 'Mapa',       desc: 'Mapa de Puerto Payo.', href: '/t3/mapa' },
   { num: '06', titulo: 'Modpack',    desc: 'Descarga e instala el modpack de la temporada.', href: '/t3/modpack' },
-  
 ]
 
 export default function NavCards() {

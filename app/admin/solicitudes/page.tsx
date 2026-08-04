@@ -103,6 +103,7 @@ export default async function SolicitudesPage() {
 
       {/* Links de admin */}
       {[
+        { label: 'Panel',       href: '/admin' },
         { label: 'Solicitudes', href: '/admin/solicitudes' },
         { label: 'Usuarios',    href: '/admin/usuarios' },
         { label: 'Anuncios',    href: '/admin/anuncios' },

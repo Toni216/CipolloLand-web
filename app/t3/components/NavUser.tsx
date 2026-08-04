@@ -13,8 +13,20 @@ interface Props {
 
 export default function NavUser({ user }: Props) {
   const [open, setOpen] = useState(false)
+  const [ocultarSolicitud, setOcultarSolicitud] = useState(false)
+  const [esAdminOOwner, setEsAdminOOwner] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    fetch('/api/t3/estado-acceso')
+      .then(res => res.json())
+      .then(data => {
+        setOcultarSolicitud(data.esStaff || data.tieneAcceso)
+        setEsAdminOOwner(data.esAdminOOwner)
+      })
+      .catch(() => {}) // si falla, se deja el estado por defecto (comportamiento anterior)
+  }, [])
 
   async function handleLogout() {
     await signOut({ redirect: false })
@@ -115,8 +127,10 @@ export default function NavUser({ user }: Props) {
 
           {/* Links */}
           {[
-            { label: 'Mi perfil',        href: '/perfil' },
-            { label: 'Solicitar acceso', href: '/t3/solicitud' },
+            { label: 'Mi perfil', href: '/perfil' },
+            { label: 'Ajustes',   href: '/perfil/ajustes' },
+            ...(ocultarSolicitud ? [] : [{ label: 'Solicitar acceso', href: '/t3/solicitud' }]),
+            ...(esAdminOOwner ? [{ label: 'Panel de admin', href: '/admin' }] : []),
           ].map(l => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} style={{
               display: 'block',

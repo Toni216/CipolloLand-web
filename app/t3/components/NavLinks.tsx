@@ -10,6 +10,7 @@ const links = [
   { label: 'Eventos',    href: '/t3/eventos' },
   { label: 'Foro',       href: '/t3/foro' },
   { label: 'Mapa',       href: '/t3/mapa' },
+  { label: 'Clasificación', href: '/t3/leaderboard' }
 ]
 
 export default function NavLinks() {
