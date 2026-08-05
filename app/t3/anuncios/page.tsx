@@ -26,7 +26,7 @@ export default async function AnunciosPage() {
             color: 'var(--green-bright)', opacity: 0.75,
             marginBottom: '8px', fontWeight: 600
           }}>
-            Temporada 3 · Apocalipsis
+            3ª edición · Apocalipsis
           </div>
           <h1 style={{
             fontFamily: 'var(--font-bebas)',

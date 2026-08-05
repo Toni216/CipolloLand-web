@@ -79,6 +79,7 @@ export default async function AnunciosAdminPage() {
           { label: 'Solicitudes', href: '/admin/solicitudes' },
           { label: 'Usuarios',    href: '/admin/usuarios' },
           { label: 'Anuncios',    href: '/admin/anuncios' },
+          { label: 'Sugerencias', href: '/admin/sugerencias' },
         ].map(l => (
           <Link key={l.href} href={l.href} style={{
             fontFamily: 'var(--font-barlow-condensed)',

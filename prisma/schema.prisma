@@ -157,6 +157,7 @@ model temporadas {
   perfil_jugador           perfil_jugador[]
   season_mods              season_mods[]
   season_server_configs    season_server_configs[]
+  sugerencias              sugerencias[]
 }
 
 model user_badges {
@@ -201,6 +202,8 @@ model users {
   perfil_jugador_perfil_jugador_user_idTousers        perfil_jugador[]     @relation("perfil_jugador_user_idTousers")
   user_badges_user_badges_granted_byTousers           user_badges[]        @relation("user_badges_granted_byTousers")
   user_badges_user_badges_user_idTousers              user_badges[]        @relation("user_badges_user_idTousers")
+  sugerencias                                         sugerencias[]
+  sugerencia_votos                                    sugerencia_votos[]
 
   @@index([deleted_at], map: "idx_users_deleted_at")
   @@index([minecraft_username], map: "idx_users_minecraft")
@@ -241,4 +244,45 @@ model season_mods {
   temporadas     temporadas @relation(fields: [temporada_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([temporada_id, sort_order], map: "idx_season_mods_temporada")
+}
+
+model sugerencias {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  temporada_id          String                 @db.Uuid
+  user_id               String?                @db.Uuid
+  titulo                String                 @db.VarChar(128)
+  descripcion           String
+  estado                String                 @default("pendiente") @db.VarChar(20)
+  editado               Boolean                @default(false)
+  created_at            DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime               @default(now()) @db.Timestamptz(6)
+  temporadas            temporadas             @relation(fields: [temporada_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                 users?                 @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  sugerencia_votos      sugerencia_votos[]
+  sugerencia_versiones  sugerencia_versiones[]
+
+  @@index([temporada_id, created_at], map: "idx_sugerencias_temporada")
+  @@index([estado], map: "idx_sugerencias_estado")
+}
+
+model sugerencia_votos {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sugerencia_id String      @db.Uuid
+  user_id       String      @db.Uuid
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  sugerencias   sugerencias @relation(fields: [sugerencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users         users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([sugerencia_id, user_id], map: "idx_sv_unico")
+}
+
+model sugerencia_versiones {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sugerencia_id String      @db.Uuid
+  titulo        String      @db.VarChar(128)
+  descripcion   String
+  guardado_en   DateTime    @default(now()) @db.Timestamptz(6)
+  sugerencias   sugerencias @relation(fields: [sugerencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sugerencia_id], map: "idx_svers_sugerencia")
 }

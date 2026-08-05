@@ -5,8 +5,8 @@ const cards = [
   { num: '02', titulo: 'Personajes', desc: 'Barón Von Feli, el Lich y los supervivientes de Puerto Payo.', href: '/t3/personajes' },
   { num: '03', titulo: 'Eventos',    desc: 'Misiones globales y momentos clave del rol.', href: '/t3/eventos' },
   { num: '04', titulo: 'Foro',       desc: 'Debates, teorías y avisos de la comunidad.', href: '/t3/foro' },
-  { num: '05', titulo: 'Mapa',       desc: 'Mapa de Puerto Payo.', href: '/t3/mapa' },
-  { num: '06', titulo: 'Modpack',    desc: 'Descarga e instala el modpack de la temporada.', href: '/t3/modpack' },
+  { num: '05', titulo: 'Modpack',    desc: 'Descarga e instala el modpack de la temporada.', href: '/t3/modpack' },
+  { num: '06', titulo: 'Sugerencias', desc: 'Propón ideas para el servidor y vota las de los demás.', href: '/t3/sugerencias' },
 ]
 
 export default function NavCards() {

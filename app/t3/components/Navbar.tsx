@@ -9,12 +9,13 @@ import NavUser from './NavUser'
 import type { Session } from 'next-auth'
 
 const links = [
-  { label: 'Lore',       href: '/t3/lore' },
-  { label: 'Anuncios',   href: '/t3/anuncios' },
-  { label: 'Personajes', href: '/t3/personajes' },
-  { label: 'Eventos',    href: '/t3/eventos' },
-  { label: 'Foro',       href: '/t3/foro' },
-  { label: 'Mapa',       href: '/t3/mapa' },
+  { label: 'Lore',          href: '/t3/lore' },
+  { label: 'Anuncios',      href: '/t3/anuncios' },
+  { label: 'Personajes',    href: '/t3/personajes' },
+  { label: 'Eventos',       href: '/t3/eventos' },
+  { label: 'Foro',          href: '/t3/foro' },
+  { label: 'Mapa',          href: '/t3/mapa' },
+  { label: 'Clasificación', href: '/t3/leaderboard' },
 ]
 
 interface Props {
