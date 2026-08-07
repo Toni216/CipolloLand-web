@@ -317,7 +317,7 @@ function TarjetaUsuario({
           padding: '12px 14px', marginBottom: '12px',
         }}>
           <p style={{ fontFamily: 'var(--font-special-elite)', fontSize: '13px', color: 'var(--bone)', marginBottom: '10px' }}>
-            ¿Seguro que quieres banear a "{u.username}"? No podrá iniciar sesión hasta que lo desbanees.
+            ¿Seguro que quieres banear a &quot;{u.username}&quot;? No podrá iniciar sesión hasta que lo desbanees.
           </p>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={confirmarBaneo} style={botonStyle('var(--blood-bright)')}>Sí, banear</button>

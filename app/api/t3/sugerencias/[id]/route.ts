@@ -5,13 +5,14 @@ import { prisma } from '@/lib/prisma'
 const TITULO_MAX = 128
 const VENTANA_EDICION_MS = 24 * 60 * 60 * 1000 // 24 horas
 const ESTADOS_BORRABLES = ['pendiente', 'descartado']
+const CATEGORIAS_VALIDAS = ['web', 'servidor', 'rol_lore', 'eventos', 'otro']
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
   const { id } = await params
-  const { titulo, descripcion } = await req.json()
+  const { titulo, descripcion, categoria } = await req.json()
 
   if (!titulo?.trim() || !descripcion?.trim()) {
     return NextResponse.json({ error: 'Título y descripción son obligatorios.' }, { status: 400 })
@@ -19,6 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (titulo.trim().length > TITULO_MAX) {
     return NextResponse.json({ error: `El título no puede superar los ${TITULO_MAX} caracteres.` }, { status: 400 })
   }
+  const categoriaFinal = CATEGORIAS_VALIDAS.includes(categoria) ? categoria : undefined
 
   try {
     const sugerencia = await prisma.sugerencias.findUnique({ where: { id } })
@@ -42,7 +44,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const actualizada = await prisma.sugerencias.update({
       where: { id },
-      data: { titulo: titulo.trim(), descripcion: descripcion.trim(), editado: true },
+      data: {
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim(),
+        editado: true,
+        ...(categoriaFinal ? { categoria: categoriaFinal } : {}),
+      },
     })
 
     return NextResponse.json({ ok: true, sugerencia: actualizada })

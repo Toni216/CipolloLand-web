@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 
 const TITULO_MAX = 128
+const CATEGORIAS_VALIDAS = ['web', 'servidor', 'rol_lore', 'eventos', 'otro']
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const { titulo, descripcion } = await req.json()
+  const { titulo, descripcion, categoria } = await req.json()
 
   if (!titulo?.trim() || !descripcion?.trim()) {
     return NextResponse.json({ error: 'Título y descripción son obligatorios.' }, { status: 400 })
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   if (titulo.trim().length > TITULO_MAX) {
     return NextResponse.json({ error: `El título no puede superar los ${TITULO_MAX} caracteres.` }, { status: 400 })
   }
+  const categoriaFinal = CATEGORIAS_VALIDAS.includes(categoria) ? categoria : 'otro'
 
   try {
     const temporada = await prisma.temporadas.findFirst({ where: { slug: 't3' } })
@@ -29,6 +31,7 @@ export async function POST(req: Request) {
         user_id: session.user.id,
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
+        categoria: categoriaFinal,
       },
     })
 

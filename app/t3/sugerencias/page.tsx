@@ -1,21 +1,27 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { esReciente } from '@/lib/fechas'
 import ListaSugerencias from './components/ListaSugerencias'
 
 export default async function SugerenciasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orden?: string }>
+  searchParams: Promise<{ orden?: string, categoria?: string }>
 }) {
   const session = await auth()
-  const { orden } = await searchParams
+  const { orden, categoria } = await searchParams
   const ordenActivo = orden === 'recientes' ? 'recientes' : 'votos'
+  const CATEGORIAS_VALIDAS = ['web', 'servidor', 'rol_lore', 'eventos', 'otro']
+  const categoriaActiva = CATEGORIAS_VALIDAS.includes(categoria ?? '') ? categoria : undefined
 
   const temporada = await prisma.temporadas.findFirst({ where: { slug: 't3' } })
 
   const sugerenciasRaw = temporada
     ? await prisma.sugerencias.findMany({
-        where: { temporada_id: temporada.id },
+        where: {
+          temporada_id: temporada.id,
+          ...(categoriaActiva ? { categoria: categoriaActiva } : {}),
+        },
         include: {
           users: { select: { username: true } },
           sugerencia_votos: { select: { user_id: true } },
@@ -30,6 +36,7 @@ export default async function SugerenciasPage({
     id: s.id,
     titulo: s.titulo,
     descripcion: s.descripcion,
+    categoria: s.categoria,
     estado: s.estado,
     editado: s.editado,
     created_at: s.created_at,
@@ -37,15 +44,14 @@ export default async function SugerenciasPage({
     esPropia: s.user_id === session?.user?.id,
     votos: s.sugerencia_votos.length,
     yaVote: session?.user?.id ? s.sugerencia_votos.some(v => v.user_id === session.user!.id) : false,
-    puedeEditar: s.user_id === session?.user?.id &&
-      (Date.now() - s.created_at.getTime()) < 1000 * 60 * 60 * 24,
+    puedeEditar: s.user_id === session?.user?.id && esReciente(s.created_at, 24),
     puedeBorrar: s.user_id === session?.user?.id &&
       ['pendiente', 'descartado'].includes(s.estado),
   }))
 
   return (
     <div style={{ paddingTop: '114px', minHeight: '100vh', background: 'var(--bg)' }}>
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '48px 32px 100px' }}>
+      <div style={{ maxWidth: '1600px', margin: '0 auto', padding: '48px 4vw 100px' }}>
 
         <div style={{ marginBottom: '32px' }}>
           <div style={{
@@ -78,6 +84,7 @@ export default async function SugerenciasPage({
           sugerencias={sugerencias}
           haySesion={!!session?.user?.id}
           ordenActivo={ordenActivo}
+          categoriaActiva={categoriaActiva}
         />
       </div>
     </div>

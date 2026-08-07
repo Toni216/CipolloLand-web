@@ -7,11 +7,16 @@ interface Sugerencia {
   id: string
   titulo: string
   descripcion: string
+  categoria: string
   estado: string
   editado: boolean
   created_at: Date
   username: string
   votos: number
+}
+
+const CATEGORIAS_LABEL: Record<string, string> = {
+  web: 'Página web', servidor: 'Servidor', rol_lore: 'Rol/Lore', eventos: 'Eventos', otro: 'Otro',
 }
 
 const ESTADOS = [
@@ -65,6 +70,14 @@ export default function ListaSugerenciasAdmin({ sugerencias }: { sugerencias: Su
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '10px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{
+                    fontFamily: 'var(--font-barlow-condensed)', fontSize: '9px',
+                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                    color: estadoInfo.color, border: `1px solid ${estadoInfo.color}66`,
+                    padding: '2px 8px',
+                  }}>
+                    {estadoInfo.label}
+                  </span>
                   <span style={{ fontFamily: 'var(--font-bebas)', fontSize: '20px', color: 'var(--bone-dim)', letterSpacing: '0.05em' }}>
                     {s.titulo}
                   </span>
@@ -78,7 +91,7 @@ export default function ListaSugerenciasAdmin({ sugerencias }: { sugerencias: Su
                   )}
                 </div>
                 <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '11px', color: 'var(--text-dim)' }}>
-                  Por {s.username} · {new Date(s.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {CATEGORIAS_LABEL[s.categoria] ?? 'Otro'} · Por {s.username} · {new Date(s.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
               </div>
 

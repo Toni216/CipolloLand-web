@@ -26,6 +26,7 @@ async function getDatos() {
     id: s.id,
     titulo: s.titulo,
     descripcion: s.descripcion,
+    categoria: s.categoria,
     estado: s.estado,
     editado: s.editado,
     created_at: s.created_at,

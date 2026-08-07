@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { esReciente } from '@/lib/fechas'
 
 export default async function Anuncios() {
   const anuncio = await prisma.anuncios.findFirst({
@@ -10,9 +11,7 @@ export default async function Anuncios() {
     include: { users: { select: { username: true } } }
   })
 
-  const esReciente = anuncio
-    ? (Date.now() - new Date(anuncio.created_at).getTime()) < 1000 * 60 * 60 * 48
-    : false
+  const reciente = anuncio ? esReciente(new Date(anuncio.created_at), 48) : false
 
   const acento = anuncio?.pinned ? 'var(--blood-bright)' : 'var(--green-bright)'
 
@@ -65,7 +64,7 @@ export default async function Anuncios() {
         }}>
           Novedades
         </h2>
-        {esReciente && !anuncio?.pinned && (
+        {reciente && !anuncio?.pinned && (
           <span style={{
             fontFamily: 'var(--font-barlow-condensed)',
             fontSize: '10px', letterSpacing: '0.15em',

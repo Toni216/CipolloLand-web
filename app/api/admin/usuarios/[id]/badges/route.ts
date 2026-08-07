@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 }
 
 // Quitar una badge a un usuario (pasando user_badges.id en el body)
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request) {
   const check = await checkAdmin()
   if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status })
 

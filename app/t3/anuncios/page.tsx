@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { esReciente } from '@/lib/fechas'
 
 async function getAnuncios() {
   return prisma.anuncios.findMany({
@@ -55,7 +56,7 @@ export default async function AnunciosPage() {
         ) : (
           anuncios.map(a => {
             const acento = a.pinned ? 'var(--blood-bright)' : 'var(--green-bright)'
-            const esReciente = (Date.now() - new Date(a.created_at).getTime()) < 1000 * 60 * 60 * 48
+            const reciente = esReciente(new Date(a.created_at), 48)
 
             return (
               <div key={a.id} style={{
@@ -80,7 +81,7 @@ export default async function AnunciosPage() {
                       📌 Fijado
                     </div>
                   )}
-                  {esReciente && !a.pinned && (
+                  {reciente && !a.pinned && (
                     <div style={{
                       fontFamily: 'var(--font-barlow-condensed)',
                       fontSize: '9px', letterSpacing: '0.15em',

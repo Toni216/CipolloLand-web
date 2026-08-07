@@ -8,6 +8,7 @@ interface Sugerencia {
   id: string
   titulo: string
   descripcion: string
+  categoria: string
   estado: string
   editado: boolean
   created_at: Date
@@ -23,7 +24,27 @@ interface Props {
   sugerencias: Sugerencia[]
   haySesion: boolean
   ordenActivo: 'votos' | 'recientes'
+  categoriaActiva?: string
 }
+
+const CATEGORIAS = [
+  { value: 'web',      label: 'Página web' },
+  { value: 'servidor', label: 'Servidor' },
+  { value: 'rol_lore', label: 'Rol/Lore' },
+  { value: 'eventos',  label: 'Eventos' },
+  { value: 'otro',     label: 'Otro' },
+]
+
+// Colores en hex literal (NO usar var() aquí: `${var(--x)}66` genera un color CSS inválido)
+const ESTADO_INFO: Record<string, { label: string, color: string }> = {
+  pendiente:    { label: 'Pendiente',    color: '#706858' },
+  en_progreso:  { label: 'En progreso',  color: '#c9962a' },
+  hecho:        { label: 'Hecho',        color: '#6db560' },
+  descartado:   { label: 'Descartado',   color: '#c0302f' },
+}
+
+const VERDE = '#6db560'
+const BONE = '#cfc5a0'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -34,6 +55,8 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'var(--font-special-elite)',
   fontSize: '13px',
   boxSizing: 'border-box',
+  overflowWrap: 'break-word',
+  wordBreak: 'break-word',
 }
 
 const botonStyle = (color: string): React.CSSProperties => ({
@@ -46,16 +69,63 @@ const botonStyle = (color: string): React.CSSProperties => ({
   cursor: 'pointer',
 })
 
-const ESTADO_INFO: Record<string, { label: string, color: string }> = {
-  pendiente:    { label: 'Pendiente',    color: 'var(--text-dim)' },
-  en_progreso:  { label: 'En progreso',  color: '#c9962a' },
-  hecho:        { label: 'Hecho',        color: 'var(--green-bright)' },
-  descartado:   { label: 'Descartado',   color: 'var(--blood-bright)' },
+// Pastilla de filtro (orden / categoría) — grande y visible, con relleno sólido cuando está activa
+const pastillaStyle = (activa: boolean): React.CSSProperties => ({
+  fontFamily: 'var(--font-barlow-condensed)',
+  fontSize: '12px', letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: activa ? 'var(--bg)' : BONE,
+  background: activa ? BONE : 'rgba(207,197,160,0.06)',
+  border: `1px solid ${activa ? BONE : 'rgba(207,197,160,0.3)'}`,
+  padding: '7px 16px',
+  fontWeight: activa ? 700 : 500,
+  textDecoration: 'none',
+  display: 'inline-block',
+  transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+})
+
+function BotonVotar({ s, haySesion, onRefresh, tamano = 'normal' }: {
+  s: Sugerencia, haySesion: boolean, onRefresh: () => void, tamano?: 'normal' | 'grande'
+}) {
+  const [loading, setLoading] = useState(false)
+
+  async function votar(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!haySesion) return
+    setLoading(true)
+    await fetch(`/api/t3/sugerencias/${s.id}/votar`, { method: 'POST' })
+    setLoading(false)
+    onRefresh()
+  }
+
+  const grande = tamano === 'grande'
+
+  return (
+    <button
+      onClick={votar}
+      disabled={loading || !haySesion}
+      title={haySesion ? (s.yaVote ? 'Quitar voto' : 'Votar') : 'Inicia sesión para votar'}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+        background: s.yaVote ? VERDE : 'transparent',
+        border: `1px solid ${s.yaVote ? VERDE : 'rgba(255,255,255,0.18)'}`,
+        color: s.yaVote ? 'var(--bg)' : 'var(--text-mid)',
+        padding: grande ? '8px 16px' : '5px 12px',
+        cursor: haySesion ? 'pointer' : 'default',
+        lineHeight: 1,
+        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+      }}
+    >
+      <span style={{ fontFamily: 'var(--font-bebas)', fontSize: grande ? '18px' : '15px' }}>{s.votos}</span>
+      <span style={{ fontFamily: 'var(--font-bebas)', fontSize: grande ? '15px' : '13px' }}>&lt;3</span>
+    </button>
+  )
 }
 
 function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [categoria, setCategoria] = useState('otro')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [abierto, setAbierto] = useState(false)
@@ -70,7 +140,7 @@ function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
     const res = await fetch('/api/t3/sugerencias', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ titulo, descripcion }),
+      body: JSON.stringify({ titulo, descripcion, categoria }),
     })
     setLoading(false)
     if (!res.ok) {
@@ -78,13 +148,13 @@ function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
       setError(data?.error ?? 'Error al publicar.')
       return
     }
-    setTitulo(''); setDescripcion(''); setAbierto(false)
+    setTitulo(''); setDescripcion(''); setCategoria('otro'); setAbierto(false)
     onCreada()
   }
 
   if (!abierto) {
     return (
-      <button onClick={() => setAbierto(true)} style={{ ...botonStyle('var(--green-bright)'), marginBottom: '24px', padding: '10px 20px' }}>
+      <button onClick={() => setAbierto(true)} style={{ ...botonStyle(VERDE), marginBottom: '28px', padding: '10px 20px' }}>
         + Proponer una idea
       </button>
     )
@@ -94,7 +164,8 @@ function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
     <div style={{
       border: '1px solid rgba(74,124,63,0.25)',
       background: 'rgba(74,124,63,0.03)',
-      padding: '24px', marginBottom: '24px',
+      padding: '24px', marginBottom: '28px',
+      maxWidth: '560px',
     }}>
       <div style={{ marginBottom: '12px' }}>
         <input
@@ -102,6 +173,11 @@ function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
           onChange={e => setTitulo(e.target.value)}
           placeholder={`Título (${titulo.length}/128)`}
         />
+      </div>
+      <div style={{ marginBottom: '12px' }}>
+        <select style={{ ...inputStyle, cursor: 'pointer' }} value={categoria} onChange={e => setCategoria(e.target.value)}>
+          {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
       </div>
       <div style={{ marginBottom: '14px' }}>
         <textarea
@@ -113,7 +189,7 @@ function FormularioNuevaSugerencia({ onCreada }: { onCreada: () => void }) {
       </div>
       {error && <div style={{ color: 'var(--blood-bright)', fontSize: '12px', marginBottom: '12px' }}>{error}</div>}
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button onClick={enviar} disabled={loading} style={botonStyle('var(--green-bright)')}>
+        <button onClick={enviar} disabled={loading} style={botonStyle(VERDE)}>
           {loading ? 'Publicando…' : 'Publicar'}
         </button>
         <button onClick={() => setAbierto(false)} style={botonStyle('var(--text-dim)')}>
@@ -129,7 +205,7 @@ function VersionesHistorial({ id }: { id: string }) {
   const [cargando, setCargando] = useState(false)
 
   async function cargar() {
-    if (versiones) { setVersiones(null); return } // toggle cerrar
+    if (versiones) { setVersiones(null); return }
     setCargando(true)
     const res = await fetch(`/api/t3/sugerencias/${id}/versiones`)
     const data = await res.json().catch(() => null)
@@ -138,19 +214,19 @@ function VersionesHistorial({ id }: { id: string }) {
   }
 
   return (
-    <div style={{ marginTop: '8px' }}>
+    <div style={{ marginTop: '10px' }}>
       <button onClick={cargar} style={{ ...botonStyle('var(--text-dim)'), fontSize: '10px', padding: '3px 10px' }}>
-        {cargando ? 'Cargando…' : versiones ? 'Ocultar versiones anteriores' : 'Ver versiones anteriores'}
+        {cargando ? 'Cargando…' : versiones ? 'Ocultar versiones' : 'Ver versiones anteriores'}
       </button>
       {versiones && versiones.length > 0 && (
-        <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid rgba(255,255,255,0.08)' }}>
           {versiones.map((v, i) => (
             <div key={i} style={{ marginBottom: '10px' }}>
-              <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px', color: 'var(--text-dim)', marginBottom: '2px' }}>
+              <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '9px', color: 'var(--text-dim)', marginBottom: '2px' }}>
                 {new Date(v.guardado_en).toLocaleString('es-ES')}
               </div>
-              <div style={{ fontFamily: 'var(--font-bebas)', fontSize: '15px', color: 'var(--text-dim)' }}>{v.titulo}</div>
-              <p style={{ fontFamily: 'var(--font-special-elite)', fontSize: '11.5px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
+              <div style={{ fontFamily: 'var(--font-bebas)', fontSize: '14px', color: 'var(--text-dim)' }}>{v.titulo}</div>
+              <p style={{ fontFamily: 'var(--font-special-elite)', fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
                 {v.descripcion}
               </p>
             </div>
@@ -158,7 +234,7 @@ function VersionesHistorial({ id }: { id: string }) {
         </div>
       )}
       {versiones && versiones.length === 0 && (
-        <div style={{ fontFamily: 'var(--font-special-elite)', fontSize: '11.5px', color: 'var(--text-dim)', marginTop: '6px' }}>
+        <div style={{ fontFamily: 'var(--font-special-elite)', fontSize: '11px', color: 'var(--text-dim)', marginTop: '6px' }}>
           Sin versiones anteriores.
         </div>
       )}
@@ -166,28 +242,21 @@ function VersionesHistorial({ id }: { id: string }) {
   )
 }
 
-function TarjetaSugerencia({ s, haySesion, onRefresh }: { s: Sugerencia, haySesion: boolean, onRefresh: () => void }) {
-  const [loading, setLoading] = useState(false)
-  const [editando, setEditando] = useState(false)
+// Formulario de edición, compartido entre la tarjeta compacta (no se usa ahí) y el modal
+function FormularioEdicion({ s, onGuardado, onCancelar }: { s: Sugerencia, onGuardado: () => void, onCancelar: () => void }) {
   const [titulo, setTitulo] = useState(s.titulo)
   const [descripcion, setDescripcion] = useState(s.descripcion)
+  const [categoria, setCategoria] = useState(s.categoria)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function votar() {
-    if (!haySesion) return
-    setLoading(true)
-    await fetch(`/api/t3/sugerencias/${s.id}/votar`, { method: 'POST' })
-    setLoading(false)
-    onRefresh()
-  }
-
-  async function guardarEdicion() {
+  async function guardar() {
     setLoading(true)
     setError(null)
     const res = await fetch(`/api/t3/sugerencias/${s.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ titulo, descripcion }),
+      body: JSON.stringify({ titulo, descripcion, categoria }),
     })
     setLoading(false)
     if (!res.ok) {
@@ -195,102 +264,216 @@ function TarjetaSugerencia({ s, haySesion, onRefresh }: { s: Sugerencia, haySesi
       setError(data?.error ?? 'Error al guardar.')
       return
     }
-    setEditando(false)
-    onRefresh()
+    onGuardado()
   }
 
-  async function borrar() {
-    if (!confirm(`¿Borrar la sugerencia "${s.titulo}"?`)) return
-    setLoading(true)
-    await fetch(`/api/t3/sugerencias/${s.id}`, { method: 'DELETE' })
-    setLoading(false)
-    onRefresh()
-  }
+  return (
+    <div>
+      <input style={{ ...inputStyle, marginBottom: '8px' }} value={titulo} maxLength={128} onChange={e => setTitulo(e.target.value)} />
+      <select style={{ ...inputStyle, marginBottom: '8px', cursor: 'pointer' }} value={categoria} onChange={e => setCategoria(e.target.value)}>
+        {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+      </select>
+      <textarea style={{ ...inputStyle, minHeight: '120px', resize: 'vertical', marginBottom: '8px' }} value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+      {error && <div style={{ color: 'var(--blood-bright)', fontSize: '11px', marginBottom: '8px' }}>{error}</div>}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button onClick={guardar} disabled={loading} style={botonStyle(VERDE)}>Guardar</button>
+        <button onClick={onCancelar} style={botonStyle('var(--text-dim)')}>Cancelar</button>
+      </div>
+    </div>
+  )
+}
 
+// Cabecera de badges (categoría + estado), reutilizada en compacta y modal
+function Badges({ s }: { s: Sugerencia }) {
+  const estadoInfo = ESTADO_INFO[s.estado] ?? ESTADO_INFO.pendiente
+  const categoriaLabel = CATEGORIAS.find(c => c.value === s.categoria)?.label ?? 'Otro'
+  return (
+    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+      <span style={{
+        fontFamily: 'var(--font-barlow-condensed)', fontSize: '10.5px', fontWeight: 600,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: BONE, border: `1px solid rgba(207,197,160,0.5)`,
+        background: 'rgba(207,197,160,0.08)',
+        padding: '4px 10px', lineHeight: 1,
+      }}>
+        {categoriaLabel}
+      </span>
+      <span style={{
+        fontFamily: 'var(--font-barlow-condensed)', fontSize: '10.5px', fontWeight: 600,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: estadoInfo.color, border: `1px solid ${estadoInfo.color}88`,
+        background: `${estadoInfo.color}1a`,
+        padding: '4px 10px', lineHeight: 1,
+      }}>
+        {estadoInfo.label}
+      </span>
+    </div>
+  )
+}
+
+const ALTURA_TARJETA = 260
+
+function TarjetaCompacta({ s, haySesion, onRefresh, onAbrir }: {
+  s: Sugerencia, haySesion: boolean, onRefresh: () => void, onAbrir: () => void
+}) {
+  const [hover, setHover] = useState(false)
   const estadoInfo = ESTADO_INFO[s.estado] ?? ESTADO_INFO.pendiente
 
   return (
-    <div style={{
-      border: '1px solid rgba(255,255,255,0.055)',
-      background: 'var(--bg2)',
-      padding: '22px 24px', marginBottom: '14px',
-      display: 'flex', gap: '16px',
-    }}>
-      {/* Botón de voto */}
-      <button
-        onClick={votar}
-        disabled={loading || !haySesion}
-        title={haySesion ? (s.yaVote ? 'Quitar voto' : 'Votar') : 'Inicia sesión para votar'}
+    <div
+      onClick={onAbrir}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        borderLeft: `1px solid ${hover ? `${estadoInfo.color}88` : 'rgba(255,255,255,0.055)'}`,
+        borderRight: `1px solid ${hover ? `${estadoInfo.color}88` : 'rgba(255,255,255,0.055)'}`,
+        borderBottom: `1px solid ${hover ? `${estadoInfo.color}88` : 'rgba(255,255,255,0.055)'}`,
+        borderTop: `3px solid ${estadoInfo.color}`,
+        background: 'var(--bg2)',
+        padding: '18px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        height: `${ALTURA_TARJETA}px`,
+        cursor: 'pointer',
+        transform: hover ? 'translateY(-2px)' : 'none',
+        boxShadow: hover ? '0 8px 20px rgba(0,0,0,0.35)' : 'none',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+      }}
+    >
+      <div style={{ marginBottom: '10px' }}>
+        <Badges s={s} />
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-bebas)', fontSize: '20px', color: 'var(--bone)',
+        letterSpacing: '0.03em', marginBottom: '8px', lineHeight: 1.15,
+        overflowWrap: 'break-word', wordBreak: 'break-word',
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      }}>
+        {s.titulo}
+      </div>
+
+      <p style={{
+        fontFamily: 'var(--font-special-elite)', fontSize: '12.5px',
+        color: 'var(--text-mid)', lineHeight: 1.75,
+        whiteSpace: 'pre-wrap', flex: 1,
+        overflowWrap: 'break-word', wordBreak: 'break-word',
+        display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      }}>
+        {s.descripcion}
+      </p>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px' }}>
+        <div style={{
+          fontFamily: 'var(--font-barlow-condensed)', fontSize: '9.5px',
+          color: 'var(--text-dim)', letterSpacing: '0.06em',
+          overflowWrap: 'break-word', wordBreak: 'break-word',
+        }}>
+          {s.username ? `Por ${s.username}` : ''}
+          {s.editado && ' · editado'}
+        </div>
+        <BotonVotar s={s} haySesion={haySesion} onRefresh={onRefresh} />
+      </div>
+    </div>
+  )
+}
+
+function ModalSugerencia({ s, haySesion, onRefresh, onCerrar }: {
+  s: Sugerencia, haySesion: boolean, onRefresh: () => void, onCerrar: () => void
+}) {
+  const [editando, setEditando] = useState(false)
+
+  async function borrar() {
+    if (!confirm(`¿Borrar la sugerencia "${s.titulo}"?`)) return
+    await fetch(`/api/t3/sugerencias/${s.id}`, { method: 'DELETE' })
+    onRefresh()
+    onCerrar()
+  }
+
+  return (
+    <div
+      onClick={onCerrar}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 900,
+        background: 'rgba(0,0,0,0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
         style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          background: s.yaVote ? 'rgba(74,124,63,0.12)' : 'transparent',
-          border: `1px solid ${s.yaVote ? 'var(--green-bright)' : 'rgba(255,255,255,0.15)'}`,
-          color: s.yaVote ? 'var(--green-bright)' : 'var(--text-mid)',
-          padding: '8px 14px', cursor: haySesion ? 'pointer' : 'default',
-          minWidth: '48px', height: 'fit-content',
+          background: 'var(--bg2)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          maxWidth: '640px', width: '100%',
+          maxHeight: '85vh', overflowY: 'auto',
+          padding: '32px',
+          position: 'relative',
         }}
       >
-        <span style={{ fontSize: '16px', lineHeight: 1 }}>▲</span>
-        <span style={{ fontFamily: 'var(--font-bebas)', fontSize: '18px' }}>{s.votos}</span>
-      </button>
+        <button
+          onClick={onCerrar}
+          style={{
+            position: 'absolute', top: '16px', right: '16px',
+            background: 'none', border: 'none', color: 'var(--text-mid)',
+            fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '4px',
+          }}
+        >
+          ×
+        </button>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-          <span style={{
-            fontFamily: 'var(--font-barlow-condensed)', fontSize: '9px',
-            letterSpacing: '0.12em', textTransform: 'uppercase',
-            color: estadoInfo.color, border: `1px solid ${estadoInfo.color}66`,
-            padding: '2px 8px',
-          }}>
-            {estadoInfo.label}
-          </span>
-          {s.editado && (
-            <span style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '9px', color: 'var(--text-dim)', fontStyle: 'italic' }}>
-              (editado)
-            </span>
-          )}
+        <div style={{ marginBottom: '14px' }}>
+          <Badges s={s} />
         </div>
 
         {editando ? (
-          <div>
-            <input style={{ ...inputStyle, marginBottom: '8px' }} value={titulo} maxLength={128} onChange={e => setTitulo(e.target.value)} />
-            <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', marginBottom: '8px' }} value={descripcion} onChange={e => setDescripcion(e.target.value)} />
-            {error && <div style={{ color: 'var(--blood-bright)', fontSize: '11px', marginBottom: '8px' }}>{error}</div>}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={guardarEdicion} disabled={loading} style={botonStyle('var(--green-bright)')}>Guardar</button>
-              <button onClick={() => { setEditando(false); setTitulo(s.titulo); setDescripcion(s.descripcion) }} style={botonStyle('var(--text-dim)')}>Cancelar</button>
-            </div>
-          </div>
+          <FormularioEdicion
+            s={s}
+            onGuardado={() => { setEditando(false); onRefresh() }}
+            onCancelar={() => setEditando(false)}
+          />
         ) : (
           <>
-            <div style={{ fontFamily: 'var(--font-bebas)', fontSize: '20px', color: 'var(--bone-dim)', letterSpacing: '0.05em', marginBottom: '6px' }}>
+            <div style={{
+              fontFamily: 'var(--font-bebas)', fontSize: '30px', color: 'var(--bone)',
+              letterSpacing: '0.03em', marginBottom: '14px', lineHeight: 1.15,
+              overflowWrap: 'break-word', wordBreak: 'break-word',
+              paddingRight: '24px',
+            }}>
               {s.titulo}
             </div>
-            <p style={{ fontFamily: 'var(--font-special-elite)', fontSize: '13px', color: 'var(--text-mid)', lineHeight: 1.85, marginBottom: '8px', whiteSpace: 'pre-wrap' }}>
+            <p style={{
+              fontFamily: 'var(--font-special-elite)', fontSize: '14px',
+              color: 'var(--text-mid)', lineHeight: 1.9, marginBottom: '18px',
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'break-word', wordBreak: 'break-word',
+            }}>
               {s.descripcion}
             </p>
-            <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '0.08em', marginBottom: '4px' }}>
+
+            <div style={{
+              fontFamily: 'var(--font-barlow-condensed)', fontSize: '10.5px',
+              color: 'var(--text-dim)', letterSpacing: '0.06em', marginBottom: '16px',
+            }}>
               {s.username ? `Por ${s.username} · ` : ''}
               {new Date(s.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {s.editado && ' · editado'}
             </div>
 
             {s.editado && <VersionesHistorial id={s.id} />}
 
-            {s.esPropia && (
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                {s.puedeEditar && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '22px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {s.esPropia && s.puedeEditar && (
                   <button onClick={() => setEditando(true)} style={botonStyle('var(--text-mid)')}>Editar</button>
                 )}
-                {s.puedeBorrar && (
+                {s.esPropia && s.puedeBorrar && (
                   <button onClick={borrar} style={botonStyle('var(--blood-bright)')}>Borrar</button>
                 )}
-                {!s.puedeEditar && !s.puedeBorrar && (
-                  <span style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px', color: 'var(--text-dim)' }}>
-                    Ya no se puede editar ni borrar
-                  </span>
-                )}
               </div>
-            )}
+              <BotonVotar s={s} haySesion={haySesion} onRefresh={onRefresh} tamano="grande" />
+            </div>
           </>
         )}
       </div>
@@ -298,9 +481,20 @@ function TarjetaSugerencia({ s, haySesion, onRefresh }: { s: Sugerencia, haySesi
   )
 }
 
-export default function ListaSugerencias({ sugerencias, haySesion, ordenActivo }: Props) {
+export default function ListaSugerencias({ sugerencias, haySesion, ordenActivo, categoriaActiva }: Props) {
   const router = useRouter()
+  const [abiertaId, setAbiertaId] = useState<string | null>(null)
   const refresh = () => router.refresh()
+
+  function construirHref(overrides: { orden?: string, categoria?: string }) {
+    const params = new URLSearchParams()
+    params.set('orden', overrides.orden ?? ordenActivo)
+    const cat = overrides.categoria !== undefined ? overrides.categoria : categoriaActiva
+    if (cat) params.set('categoria', cat)
+    return `/t3/sugerencias?${params.toString()}`
+  }
+
+  const sugerenciaAbierta = sugerencias.find(s => s.id === abiertaId) ?? null
 
   return (
     <div>
@@ -312,19 +506,34 @@ export default function ListaSugerencias({ sugerencias, haySesion, ordenActivo }
         </p>
       )}
 
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
-        <Link href="/t3/sugerencias?orden=votos" style={{
-          ...botonStyle(ordenActivo === 'votos' ? 'var(--green-bright)' : 'var(--text-dim)'),
-          textDecoration: 'none', display: 'inline-block',
-        }}>
-          Más votadas
-        </Link>
-        <Link href="/t3/sugerencias?orden=recientes" style={{
-          ...botonStyle(ordenActivo === 'recientes' ? 'var(--green-bright)' : 'var(--text-dim)'),
-          textDecoration: 'none', display: 'inline-block',
-        }}>
-          Más recientes
-        </Link>
+      <div style={{ marginBottom: '18px' }}>
+        <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '8px' }}>
+          Ordenar por
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Link href={construirHref({ orden: 'votos' })} style={pastillaStyle(ordenActivo === 'votos')}>
+            Más votadas
+          </Link>
+          <Link href={construirHref({ orden: 'recientes' })} style={pastillaStyle(ordenActivo === 'recientes')}>
+            Más recientes
+          </Link>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '8px' }}>
+          Categoría
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Link href={construirHref({ categoria: '' })} style={pastillaStyle(!categoriaActiva)}>
+            Todas
+          </Link>
+          {CATEGORIAS.map(c => (
+            <Link key={c.value} href={construirHref({ categoria: c.value })} style={pastillaStyle(categoriaActiva === c.value)}>
+              {c.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {sugerencias.length === 0 ? (
@@ -332,7 +541,26 @@ export default function ListaSugerencias({ sugerencias, haySesion, ordenActivo }
           Nadie ha propuesto nada todavía. ¡Sé el primero!
         </p>
       ) : (
-        sugerencias.map(s => <TarjetaSugerencia key={s.id} s={s} haySesion={haySesion} onRefresh={refresh} />)
+        <div className="sugerencias-grid">
+          {sugerencias.map(s => (
+            <TarjetaCompacta
+              key={s.id}
+              s={s}
+              haySesion={haySesion}
+              onRefresh={refresh}
+              onAbrir={() => setAbiertaId(s.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {sugerenciaAbierta && (
+        <ModalSugerencia
+          s={sugerenciaAbierta}
+          haySesion={haySesion}
+          onRefresh={refresh}
+          onCerrar={() => setAbiertaId(null)}
+        />
       )}
     </div>
   )
