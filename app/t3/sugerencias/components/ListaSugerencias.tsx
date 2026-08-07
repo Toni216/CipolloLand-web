@@ -44,6 +44,7 @@ const ESTADO_INFO: Record<string, { label: string, color: string }> = {
 }
 
 const VERDE = '#6db560'
+const ROJO_OSCURO = '#9b1c1c'
 const BONE = '#cfc5a0'
 
 const inputStyle: React.CSSProperties = {
@@ -107,9 +108,9 @@ function BotonVotar({ s, haySesion, onRefresh, tamano = 'normal' }: {
       title={haySesion ? (s.yaVote ? 'Quitar voto' : 'Votar') : 'Inicia sesión para votar'}
       style={{
         display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-        background: s.yaVote ? VERDE : 'transparent',
-        border: `1px solid ${s.yaVote ? VERDE : 'rgba(255,255,255,0.18)'}`,
-        color: s.yaVote ? 'var(--bg)' : 'var(--text-mid)',
+        background: s.yaVote ? ROJO_OSCURO : 'transparent',
+        border: `1px solid ${s.yaVote ? ROJO_OSCURO : 'rgba(255,255,255,0.18)'}`,
+        color: s.yaVote ? BONE : 'var(--text-mid)',
         padding: grande ? '8px 16px' : '5px 12px',
         cursor: haySesion ? 'pointer' : 'default',
         lineHeight: 1,
