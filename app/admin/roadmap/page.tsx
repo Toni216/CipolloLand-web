@@ -3,46 +3,50 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import NavController from '@/app/t3/components/NavController'
 import Footer from '@/app/t3/components/Footer'
-import ListaSugerenciasAdmin from './components/ListaSugerenciasAdmin'
+import GestionRoadmap from './components/GestionRoadmap'
 import Link from 'next/link'
 
 async function getDatos() {
   const temporada = await prisma.temporadas.findFirst({ where: { slug: 't3' } })
-  if (!temporada) return { sugerencias: [], jugadores: 0 }
+  if (!temporada) return { items: [], sugerencias: [], jugadores: 0 }
 
-  const [sugerenciasRaw, jugadores] = await Promise.all([
+  const [items, sugerencias, jugadores] = await Promise.all([
+    prisma.roadmap_items.findMany({
+      where: { temporada_id: temporada.id },
+      orderBy: { created_at: 'desc' },
+      include: {
+        sugerencias: { select: { id: true, titulo: true } },
+      },
+    }),
     prisma.sugerencias.findMany({
       where: { temporada_id: temporada.id },
-      orderBy: [{ sugerencia_votos: { _count: 'desc' } }, { created_at: 'desc' }],
-      include: {
-        users: { select: { username: true } },
-        _count: { select: { sugerencia_votos: true } },
-      },
+      select: { id: true, titulo: true },
+      orderBy: { created_at: 'desc' },
     }),
     prisma.perfil_jugador.count({ where: { temporada_id: temporada.id, status: 'aprobado', deleted_at: null } }),
   ])
 
-  const sugerencias = sugerenciasRaw.map(s => ({
-    id: s.id,
-    titulo: s.titulo,
-    descripcion: s.descripcion,
-    categoria: s.categoria,
-    estado: s.estado,
-    editado: s.editado,
-    created_at: s.created_at,
-    username: s.users?.username ?? 'Usuario eliminado',
-    votos: s._count.sugerencia_votos,
-  }))
-
-  return { sugerencias, jugadores }
+  return {
+    items: items.map(i => ({
+      id: i.id,
+      titulo: i.titulo,
+      descripcion: i.descripcion,
+      estado: i.estado,
+      sugerencia_id: i.sugerencia_id,
+      sugerenciaTitulo: i.sugerencias?.titulo ?? null,
+      created_at: i.created_at,
+    })),
+    sugerencias,
+    jugadores,
+  }
 }
 
-export default async function SugerenciasAdminPage() {
+export default async function RoadmapAdminPage() {
   const session = await auth()
   if (!session?.user?.id) redirect('/login')
   if (!['admin', 'owner'].includes(session.user.rol)) redirect('/t3')
 
-  const { sugerencias, jugadores } = await getDatos()
+  const { items, sugerencias, jugadores } = await getDatos()
 
   return (
     <>
@@ -78,9 +82,9 @@ export default async function SugerenciasAdminPage() {
           <Link key={l.href} href={l.href} style={{
             fontFamily: 'var(--font-barlow-condensed)', fontSize: '11px', letterSpacing: '0.12em',
             textTransform: 'uppercase' as const,
-            color: l.href === '/admin/sugerencias' ? 'var(--green-bright)' : 'var(--text-dim)',
+            color: l.href === '/admin/roadmap' ? 'var(--green-bright)' : 'var(--text-dim)',
             textDecoration: 'none', padding: '0 14px',
-            borderBottom: l.href === '/admin/sugerencias' ? '2px solid var(--green-bright)' : '2px solid transparent',
+            borderBottom: l.href === '/admin/roadmap' ? '2px solid var(--green-bright)' : '2px solid transparent',
             height: '44px', display: 'flex', alignItems: 'center',
           }}>
             {l.label}
@@ -89,7 +93,7 @@ export default async function SugerenciasAdminPage() {
       </div>
 
       <div style={{ paddingTop: '158px', minHeight: '100vh', background: 'var(--bg)' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 32px 100px' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 32px 100px' }}>
 
           <div style={{ marginBottom: '32px' }}>
             <div style={{
@@ -103,16 +107,11 @@ export default async function SugerenciasAdminPage() {
               fontFamily: 'var(--font-bebas)', fontSize: '48px', color: 'var(--bone)',
               letterSpacing: '0.04em', lineHeight: 1,
             }}>
-              Sugerencias
+              Roadmap
             </h1>
-            <div style={{
-              fontFamily: 'var(--font-barlow-condensed)', fontSize: '13px', color: 'var(--text-mid)',
-            }}>
-              {sugerencias.length} sugerencia{sugerencias.length !== 1 ? 's' : ''} en total
-            </div>
           </div>
 
-          <ListaSugerenciasAdmin sugerencias={sugerencias} />
+          <GestionRoadmap items={items} sugerencias={sugerencias} />
         </div>
       </div>
       <Footer />

@@ -15,6 +15,7 @@ const linksDesplegable = [
   { label: 'Foro',          href: '/t3/foro' },
   { label: 'Mapa',          href: '/t3/mapa' },
   { label: 'Clasificación', href: '/t3/clasificacion' },
+  { label: 'Roadmap',       href: '/t3/roadmap' },
 ]
 
 const linkStyle = (active: boolean): React.CSSProperties => ({

@@ -210,4 +210,5 @@ body {
 
 @media (max-width: 640px) {
   .sugerencias-grid { grid-template-columns: 1fr; }
+  .roadmap-columnas { grid-template-columns: 1fr !important; }
 }

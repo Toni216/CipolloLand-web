@@ -179,6 +179,7 @@ export default async function AdminPage() {
           { label: 'Usuarios', href: '/admin/usuarios' },
           { label: 'Anuncios', href: '/admin/anuncios' },
           { label: 'Sugerencias', href: '/admin/sugerencias' },
+          { label: 'Roadmap', href: '/admin/roadmap' },
         ].map(l => (
           <Link key={l.href} href={l.href} style={{
             fontFamily: 'var(--font-barlow-condensed)', fontSize: '11px', letterSpacing: '0.12em',
